@@ -40,17 +40,17 @@
 
     toggleButtonsAbledness();
 
-    // type "python -m http.server" to use webworkers locally
+    // type "python -m http.server" to use webworkers in Chrome
     // Hint! This is where you should post messages to the web worker and
     // receive messages from the web worker.
 
     if (window.Worker) {
-      var myWorker = new Worker("../scripts/worker.js");
-      myWorker.postMessage({"imageData": imageData,
-                          "type": type});
+      var myWorker = new Worker("scripts/worker.js");
+      myWorker.postMessage({"imageData": imageData, "type": type});
       console.log("msg posted to webworker");
     }
 
+    // Remove the following loop to allow webworker to perform work in background
     // length = imageData.data.length / 4;
     // for (i = j = 0, ref = length; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
     //   r = imageData.data[i * 4 + 0];
@@ -64,12 +64,22 @@
     //   imageData.data[i * 4 + 3] = pixel[3];
     // }
 
+    // The following receives data from webworker.
     myWorker.onmessage = function(e) {
       imageData = e.data;
       console.log("msg received from webworker");
       toggleButtonsAbledness();
       return ctx.putImageData(imageData, 0, 0);
     }
+
+    // Added for errorhandling
+    myWorker.onerror = function(error) {
+      function WorkerException(message) {
+        this.name = "WorkerException";
+        this.message = message;
+      };
+      throw new WorkerException('Worker error');
+    };
   };
 
   function revertImage() {
